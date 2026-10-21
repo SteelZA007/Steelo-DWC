@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Steelo DWC Master Control</title>
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Steelo DWC">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0b0f19; color: #f3f4f6; }
+        .glass-card { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(75, 85, 99, 0.3); }
+        .neon-glow-green { box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
+        .neon-glow-blue { box-shadow: 0 0 15px rgba(59, 130, 246, 0.2); }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+
+    <!-- Top Navigation Bar -->
+    <header class="sticky top-0 z-50 glass-card border-b border-gray-800 px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <div class="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+            <h1 class="font-bold text-lg tracking-tight text-white">Steelo DWC <span class="text-xs px-2 py-0.5 bg-emerald-900/60 text-emerald-400 rounded-full border border-emerald-700/50">V3 Live</span></h1>
+        </div>
+        <div class="flex items-center space-x-3">
+            <button onclick="toggleSettingsModal()" class="w-10 h-10 rounded-xl bg-gray-800/80 border border-gray-700 flex items-center justify-center text-gray-300 hover:text-white active:scale-95 transition">
+                <i class="fa-solid fa-gear"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-md mx-auto p-4 space-y-4">
+
+        <!-- Connection Status Banner -->
+        <div id="connectionBanner" class="glass-card rounded-2xl p-3 flex items-center justify-between text-xs">
+            <div class="flex items-center space-x-2">
+                <i id="connIcon" class="fa-solid fa-cloud text-emerald-400"></i>
+                <span id="connText" class="text-gray-300 font-medium">Tuya Cloud API (Dual-Account Synced)</span>
+            </div>
+            <span id="syncTime" class="text-gray-500">Just now</span>
+        </div>
+
+        <!-- Agronomy Telemetry Grid -->
+        <div class="grid grid-cols-2 gap-3">
+            <!-- VPD Card -->
+            <div class="glass-card rounded-2xl p-4 neon-glow-blue relative overflow-hidden">
+                <div class="flex justify-between items-start">
+                    <span class="text-xs text-blue-400 font-medium uppercase tracking-wider">Leaf VPD</span>
+                    <i class="fa-solid fa-droplet text-blue-500/50"></i>
+                </div>
+                <div class="mt-2 flex items-baseline space-x-1">
+                    <span id="valVpd" class="text-2xl font-bold text-white">1.22</span>
+                    <span class="text-xs text-gray-400">kPa</span>
+                </div>
+                <span class="inline-block mt-2 text-[10px] bg-blue-950/80 text-blue-300 px-2 py-0.5 rounded border border-blue-800/50">Sweet Spot (1.1-1.4)</span>
+            </div>
+
+            <!-- pH Card -->
+            <div class="glass-card rounded-2xl p-4 neon-glow-green relative overflow-hidden">
+                <div class="flex justify-between items-start">
+                    <span class="text-xs text-emerald-400 font-medium uppercase tracking-wider">Reservoir pH</span>
+                    <i class="fa-solid fa-flask text-emerald-500/50"></i>
+                </div>
+                <div class="mt-2 flex items-baseline space-x-1">
+                    <span id="valPh" class="text-2xl font-bold text-white">5.72</span>
+                    <span class="text-xs text-gray-400">pH</span>
+                </div>
+                <span class="inline-block mt-2 text-[10px] bg-emerald-950/80 text-emerald-300 px-2 py-0.5 rounded border border-emerald-800/50">Drift Band 5.8-6.2</span>
+            </div>
+        </div>
+
+        <!-- Climate Quick Metrics -->
+        <div class="glass-card rounded-2xl p-4 grid grid-cols-3 gap-2 text-center">
+            <div>
+                <span class="text-[10px] text-gray-400 block uppercase">Temperature</span>
+                <span id="valTemp" class="text-lg font-bold text-white">27.5°C</span>
+            </div>
+            <div class="border-x border-gray-800">
+                <span class="text-[10px] text-gray-400 block uppercase">Humidity</span>
+                <span id="valRh" class="text-lg font-bold text-white">64.3%</span>
+            </div>
+            <div>
+                <span class="text-[10px] text-gray-400 block uppercase">CO2 Level</span>
+                <span id="valCo2" class="text-lg font-bold text-white">726 PPM</span>
+            </div>
+        </div>
+
+        <!-- GMC 40L Dehumidifier Control Panel -->
+        <div class="glass-card rounded-2xl p-4 space-y-3">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-wind text-cyan-400"></i>
+                    <h2 class="font-semibold text-sm text-white">GMC 40L Dehumidifier</h2>
+                </div>
+                <span id="dehumStateBadge" class="text-[10px] bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-800">Auto Running</span>
+            </div>
+            
+            <div class="bg-gray-900/60 rounded-xl p-3 flex items-center justify-between">
+                <div>
+                    <span class="text-xs text-gray-400 block">Compressor Protection Timer</span>
+                    <span id="compressorTimer" class="text-sm font-mono text-emerald-400 font-bold">Ready (3m Delay Clear)</span>
+                </div>
+                <button onclick="toggleDehumidifierPower()" id="dehumPowerBtn" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl transition shadow-lg shadow-emerald-900/40">
+                    POWER ON
+                </button>
+            </div>
+        </div>
+
+        <!-- CO2 & PPFD Schedule Status -->
+        <div class="glass-card rounded-2xl p-4 space-y-2">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-cloud-arrow-up text-amber-400"></i>
+                    <h2 class="font-semibold text-sm text-white">CO2 Solenoid & PPFD Sync</h2>
+                </div>
+                <span class="text-[10px] bg-amber-950 text-amber-300 px-2 py-0.5 rounded-full border border-amber-800">Target: 750 PPM</span>
+            </div>
+            <div class="text-xs text-gray-300 flex justify-between bg-gray-900/60 p-3 rounded-xl">
+                <span>Light Schedule Active: <strong class="text-white">19:00 - 08:30</strong></span>
+                <span class="text-emerald-400 font-semibold">500+ PPFD Match</span>
+            </div>
+        </div>
+
+        <!-- Interactive Chart Card -->
+        <div class="glass-card rounded-2xl p-4 space-y-3">
+            <div class="flex justify-between items-center">
+                <h2 class="font-semibold text-sm text-white">Telemetry & Trend History</h2>
+                <div class="flex space-x-1">
+                    <button onclick="switchChartMetric('temp')" class="px-2 py-1 text-[10px] bg-gray-800 rounded text-gray-300 hover:bg-gray-700">Temp</button>
+                    <button onclick="switchChartMetric('rh')" class="px-2 py-1 text-[10px] bg-gray-800 rounded text-gray-300 hover:bg-gray-700">RH</button>
+                    <button onclick="switchChartMetric('co2')" class="px-2 py-1 text-[10px] bg-gray-800 rounded text-gray-300 hover:bg-gray-700">CO2</button>
+                    <button onclick="switchChartMetric('ph')" class="px-2 py-1 text-[10px] bg-gray-800 rounded text-gray-300 hover:bg-gray-700">pH</button>
+                </div>
+            </div>
+            <div class="h-48 relative">
+                <canvas id="telemetryChart"></canvas>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card rounded-3xl w-full max-w-sm p-5 space-y-4 border border-gray-700">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-white text-base">Tuya Cloud API Settings</h3>
+                <button onclick="toggleSettingsModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <p class="text-xs text-gray-400">Enter your Tuya IoT Developer credentials to sync both accounts remotely over cellular data anywhere.</p>
+            
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="text-gray-300 block mb-1">Client ID / Access ID</label>
+                    <input type="text" id="tuyaClientId" placeholder="e.g. g2k8xxxxxxxxxxxx" class="w-full bg-gray-900 border border-gray-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="text-gray-300 block mb-1">Client Secret</label>
+                    <input type="password" id="tuyaSecret" placeholder="e.g. 9b2f... " class="w-full bg-gray-900 border border-gray-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="text-gray-300 block mb-1">GMC 40L Device ID</label>
+                    <input type="text" id="tuyaDeviceId" placeholder="e.g. bf3a... " class="w-full bg-gray-900 border border-gray-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-emerald-500">
+                </div>
+            </div>
+
+            <button onclick="saveSettings()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs transition shadow-lg shadow-emerald-900/40">
+                Save & Connect Cloud
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        let chartInstance = null;
+        let dehumPowerState = true;
+
+        function toggleSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            modal.classList.toggle('hidden');
+        }
+
+        function saveSettings() {
+            const clientId = document.getElementById('tuyaClientId').value;
+            const secret = document.getElementById('tuyaSecret').value;
+            const deviceId = document.getElementById('tuyaDeviceId').value;
+            
+            localStorage.setItem('tuya_client_id', clientId);
+            localStorage.setItem('tuya_secret', secret);
+            localStorage.setItem('tuya_device_id', deviceId);
+            
+            alert('Cloud credentials saved successfully!');
+            toggleSettingsModal();
+        }
+
+        function toggleDehumidifierPower() {
+            dehumPowerState = !dehumPowerState;
+            const btn = document.getElementById('dehumPowerBtn');
+            const badge = document.getElementById('dehumStateBadge');
+            
+            if (dehumPowerState) {
+                btn.textContent = 'POWER OFF';
+                btn.className = 'px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-xl transition shadow-lg shadow-rose-900/40';
+                badge.textContent = 'Auto Running';
+                badge.className = 'text-[10px] bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-800';
+            } else {
+                btn.textContent = 'POWER ON';
+                btn.className = 'px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl transition shadow-lg shadow-emerald-900/40';
+                badge.textContent = 'Standby (OFF)';
+                badge.className = 'text-[10px] bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full border border-gray-700';
+            }
+        }
+
+        // Initialize Chart.js
+        function initChart(metric = 'temp') {
+            const ctx = document.getElementById('telemetryChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            let label = 'Temperature (°C)';
+            let data = [27.2, 27.4, 27.3, 27.5, 27.6, 27.5];
+            let color = '#34d399';
+
+            if (metric === 'rh') {
+                label = 'Humidity (%)';
+                data = [65.1, 64.8, 64.2, 64.5, 64.0, 64.3];
+                color = '#38bdf8';
+            } else if (metric === 'co2') {
+                label = 'CO2 (PPM)';
+                data = [710, 730, 745, 720, 725, 726];
+                color = '#fbbf24';
+            } else if (metric === 'ph') {
+                label = 'Reservoir pH';
+                data = [5.80, 5.78, 5.75, 5.74, 5.72, 5.72];
+                color = '#a78bfa';
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['12:00', '14:00', '16:00', '18:00', '20:00', 'Now'],
+                    datasets: [{
+                        label: label,
+                        data: data,
+                        borderColor: color,
+                        backgroundColor: color + '15',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af', font: { size: 10 } } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af', font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        function switchChartMetric(metric) {
+            initChart(metric);
+        }
+
+        window.onload = function() {
+            initChart('temp');
+        };
+    </script>
+</body>
+</html>
